@@ -27,9 +27,10 @@ def register_user(email: str,
     write_json(data)
 
 def login_user(email: str, password: str) -> dict:
+    password_hash = hash_password_or_token(password)
     for user in read_json()['users']:
         if (user['email'] == email
-        and verify_password(password, user['pwd_hash'])
+        and verify_password(password_hash, user['pwd_hash'])
         and user['is_active']):
             #Создаем сессию со сроком действия 1 день
             token = make_token()

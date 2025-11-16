@@ -1,0 +1,25 @@
+{
+    "seq": 0,
+    "users": [
+        {
+            "id": "7bee87d2-c0bb-11f0-b6c2-84a938338c7e",
+            "email": "danis_90@mail.ru",
+            "first_name": "Danis",
+            "last_name": "Khisamutdinov",
+            "middle_name": "Khanifovich",
+            "pwd_hash": "7e8c8fef279d03e340d8478375e91332701674bc3172042dc162f89fc1588041",
+            "is_active": true,
+            "created_at": "2025-11-13T18:06:31.913782+00:00"
+        },
+        {
+            "id": "7beeda68-c0bb-11f0-b34a-84a938338c7e",
+            "email": "test@gmail.ru",
+            "first_name": "Tester",
+            "last_name": "Testerov",
+            "middle_name": "",
+            "pwd_hash": "d6208e992f0f31da6b7e6a4f115eca195534ba8e923eaa551c9af6e6801d0f6c",
+            "is_active": true,
+            "created_at": "2025-11-13T18:06:31.915407+00:00"
+        }
+    ]
+}

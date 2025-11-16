@@ -1,0 +1,12 @@
+{
+    "seq": 0,
+    "sessions": [
+        {
+            "session_hash": "",
+            "user_id": "",
+            "is_active": true,
+            "created_at": "",
+            "expired_at": ""
+        }
+    ]
+}

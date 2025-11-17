@@ -1,4 +1,6 @@
 from datetime import datetime, timezone, timedelta
+from typing import Any
+
 from crud.users import read_json, write_json
 from crud.sessions import read_json as read_sessions, write_json as write_sessions
 from core.security import hash_password_or_token, generate_id, verify_password, make_token
@@ -29,18 +31,19 @@ def register_user(email: str,
 def login_user(email: str, password: str) -> dict:
     for user in read_json()['users']:
         if (user['email'] == email
-        and verify_password(password, user['pwd_hash'])
+        and verify_password(hash_password_or_token(password), user['pwd_hash'])
         and user['is_active']):
-            #Создаем сессию со сроком действия 1 день
+            #Создаем сессию со сроком действия 31 день
             token = make_token()
             current_user = {
                 'session_hash': hash_password_or_token(token),
                 'user_id': user['id'],
                 'created_at': datetime.now(timezone.utc).isoformat(),
-                'expired_at': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+                'expired_at': (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
             }
             read_sessions()['sessions'].append(current_user)
             write_sessions(current_user)
+            #Возвращаем токен и id пользователя
             return {'user_id': user['id'], 'session_token': token}
     else:
         raise ValueError('Неверный адрес электронной почты или пароль')
@@ -59,11 +62,14 @@ def delete_user(user_id: str) -> None:
             user['is_active'] = False
             break
 
-def auth_session(token: str) -> bool:
-    pass
-
-def get_current_user_from_session(token: str) -> dict:
-    pass
-
-def get_current_user(user_id: str) -> dict:
-    pass
+def auth_session(token: str) -> dict | None:
+    hashed_token = hash_password_or_token(token)
+    for session in read_sessions()['sessions']:
+        if all(verify_password(hashed_token, session['session_hash']),
+               session['is_active'],
+               datetime.now(timezone.utc) < datetime.fromisoformat(session['expired_at'])):
+            # При успешной авторизации возвращаем токен и id пользователя
+            return {'user_id': session['user_id'], 'session_token': token}
+        else:
+            raise ValueError('Пользователь не авторизован')
+    return None

@@ -1,19 +1,12 @@
-"""Небольшая демонстрация возможностей модуля core.operations."""
-
-from core.operations import (
-    register_user,
-    login_user,
-    auth_session,
-    logout_user,
-)
+from core.operations import register_user, login_user,auth_session,logout_user
 
 
 def demo_register_users() -> None:
-    print("\n=== Регистрация пользователей ===")
+    print("\nРегистрация пользователей")
     users = [
         {
             'email': 'danis_90@mail.ru',
-            'password': '24031990',
+            'password': '123456',
             'first_name': 'Danis',
             'last_name': 'Khisamutdinov',
             'middle_name': 'Khanifovich',
@@ -43,9 +36,9 @@ def demo_register_users() -> None:
 
 
 def demo_login_and_session() -> None:
-    print("\n=== Вход пользователей ===")
+    print("\nВход пользователей")
     credentials = [
-        ('danis_90@mail.ru', '24031990'),
+        ('danis_90@mail.ru', '123456'),
         ('test@gmail.ru', 'test111'),
     ]
     tokens: dict[str, str] = {}
@@ -60,7 +53,7 @@ def demo_login_and_session() -> None:
             tokens[email] = token
             print(f"- {email}: вошёл. Токен {token[:12]}...")
 
-    print("\n=== Проверка активных сессий ===")
+    print("\nПроверка активных сессий")
     for email, token in tokens.items():
         try:
             session_info = auth_session(token)
@@ -71,7 +64,7 @@ def demo_login_and_session() -> None:
 
     if tokens:
         email, token = next(iter(tokens.items()))
-        print(f"\n=== Выход пользователя {email} ===")
+        print(f"\nВыход пользователя {email}")
         try:
             logout_user(token)
         except ValueError as err:
@@ -79,7 +72,7 @@ def demo_login_and_session() -> None:
         else:
             print(f"- {email}: сессия завершена")
 
-        print("\n=== Повторная проверка сессии ===")
+        print("\nПовторная проверка сессии")
         try:
             auth_session(token)
         except ValueError as err:

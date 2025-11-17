@@ -1,6 +1,4 @@
 from datetime import datetime, timezone, timedelta
-from typing import Any
-
 from crud.users import read_json, write_json
 from crud.sessions import read_json as read_sessions, write_json as write_sessions
 from core.security import hash_password_or_token, generate_id, verify_password, make_token
@@ -29,7 +27,9 @@ def register_user(email: str,
     write_json(data)
 
 def login_user(email: str, password: str) -> dict:
-    for user in read_json()['users']:
+    users = read_json()
+    sessions = read_sessions()
+    for user in users['users']:
         if (user['email'] == email
         and verify_password(hash_password_or_token(password), user['pwd_hash'])
         and user['is_active']):
@@ -38,11 +38,12 @@ def login_user(email: str, password: str) -> dict:
             current_user = {
                 'session_hash': hash_password_or_token(token),
                 'user_id': user['id'],
+                'is_active': True,
                 'created_at': datetime.now(timezone.utc).isoformat(),
                 'expired_at': (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
             }
-            read_sessions()['sessions'].append(current_user)
-            write_sessions(current_user)
+            sessions['sessions'].append(current_user)
+            write_sessions(sessions)
             #Возвращаем токен и id пользователя
             return {'user_id': user['id'], 'session_token': token}
     else:
@@ -50,10 +51,14 @@ def login_user(email: str, password: str) -> dict:
 
 def logout_user(token: str) -> None:
     #Выключаем сессию при совпадении токена
-    for session in read_sessions()['sessions']:
-        if verify_password(token, session['session_hash']):
+    sessions = read_sessions()
+    hashed_token = hash_password_or_token(token)
+    for session in sessions['sessions']:
+        if verify_password(hashed_token, session['session_hash']):
             session['is_active'] = False
-            break
+            write_sessions(sessions)
+            return
+    raise ValueError('Сессия не найдена или уже завершена')
 
 def delete_user(user_id: str) -> None:
     #Мягкое удаление пользователя сделав ее неактивной
@@ -62,14 +67,21 @@ def delete_user(user_id: str) -> None:
             user['is_active'] = False
             break
 
-def auth_session(token: str) -> dict | None:
+def auth_session(token: str) -> dict:
     hashed_token = hash_password_or_token(token)
+    now = datetime.now(timezone.utc)
     for session in read_sessions()['sessions']:
-        if all(verify_password(hashed_token, session['session_hash']),
-               session['is_active'],
-               datetime.now(timezone.utc) < datetime.fromisoformat(session['expired_at'])):
+        session_hash = session.get('session_hash')
+        expired_at = session.get('expired_at')
+        if not (session_hash and expired_at):
+            continue
+        try:
+            expires_at = datetime.fromisoformat(expired_at)
+        except ValueError:
+            continue
+        if (verify_password(hashed_token, session_hash)
+            and session.get('is_active', True)
+            and now < expires_at):
             # При успешной авторизации возвращаем токен и id пользователя
             return {'user_id': session['user_id'], 'session_token': token}
-        else:
-            raise ValueError('Пользователь не авторизован')
-    return None
+    raise ValueError('Пользователь не авторизован')
